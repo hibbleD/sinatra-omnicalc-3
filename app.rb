@@ -89,7 +89,7 @@ post("/process_single_message") do
     },
     {
       "role" => "user",
-      "content" => "Hello!"
+      "content" => @the_message
     }
   ]
 }
@@ -103,8 +103,129 @@ post("/process_single_message") do
 
 @parsed_response = JSON.parse(@raw_response)
 
-pp @parsed_response
+@text_response = @parsed_response.fetch("choices").at(0).fetch("message").fetch("content")
+
+pp @text_response
 
   erb(:process_single_message)
   
+end
+
+get("/chat") do
+  if !cookies["chat_history"]
+    cookies.store("chat_history", JSON.generate([]))
+  else
+    @chat_history = JSON.parse(cookies.fetch("chat_history"))
+  end
+  erb(:chat)
+end
+
+post("/chat") do
+  require "http"
+  require "json"
+  require "sinatra/cookies"
+
+  @user_message = params.fetch("user_message")
+
+  @chat_history = JSON.parse(cookies.fetch("chat_history"))
+
+
+
+  @request_headers_hash = {
+  "Authorization" => "Bearer #{ENV.fetch("GPT_KEY")}",
+  "content-type" => "application/json"
+}
+
+@request_body_hash = {
+  "model" => "gpt-3.5-turbo",
+  "messages" => [
+    {
+      "role" => "system",
+      "content" => "You are a helpful assistant."
+    },
+    {
+      "role" => "user",
+      "content" => @user_message
+    }
+  ]
+}
+
+@request_body_json = JSON.generate(@request_body_hash)
+
+@raw_response = HTTP.headers(@request_headers_hash).post(
+  "https://api.openai.com/v1/chat/completions",
+  :body => @request_body_json
+).to_s
+
+@parsed_response = JSON.parse(@raw_response)
+
+@text_response = @parsed_response.fetch("choices").at(0).fetch("message").fetch("content")
+
+@chat_history.push({"role":"user", "content":@user_message})
+@chat_history.push({"role":"assistant", "content":@text_response})
+
+cookies.store("chat_history", JSON.generate(@chat_history))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @parsed_cookies = JSON.parse(cookies.fetch("chat_history"))
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  redirect(:chat)
+end
+
+post("/clear_chat") do
+
+  cookies["chat_history"] = JSON.generate([])
+  redirect(:chat)
 end

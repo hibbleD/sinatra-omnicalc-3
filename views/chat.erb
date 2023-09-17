@@ -1,16 +1,14 @@
-<dl>
-    <dt>user</dt>
-    <dd>hello</dd>
-    <!--<dd></dd>-->
-    <dt>assistant</dt>
-    <dd>Hello! How can I assist you today?</dd>
-    <!--<dd></dd>-->
-</dl>
+ <% @chat_history.each do |message| %>
+ <p><%= message.fetch("role") %></p>
+ <p><%= message.fetch("content") %></p>
+  
+ <% end %>
 
-<form action="/add_message_to_chat" method="post">
+
+<form action="/chat" method="post">
   <label for="new_message_field">You:</label>
   
-  <input id="new_message" type="text" name="user_message" placeholder="Enter a message....">
+  <input id="new_message_field" type="text" name="user_message" placeholder="Enter a message....">
 
   <button>Send</button>
 </form>
